@@ -11,8 +11,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.mongodb.client.model.Filters.eq;
+
+//import static com.mongodb.client.model.Filters.eq;
 
 @Component
 public class MovieDao extends AbstractMFlixDao {
@@ -62,7 +67,7 @@ public class MovieDao extends AbstractMFlixDao {
 
         List<Bson> pipeline = new ArrayList<>();
         // match stage to find movie
-        Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
+        Bson match = Aggregates.match(eq("_id", new ObjectId(movieId)));
         pipeline.add(match);
         // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
         // retrieved with Movies.
@@ -117,12 +122,13 @@ public class MovieDao extends AbstractMFlixDao {
      * @return List of matching Document objects.
      */
     public List<Document> getMoviesByCountry(String... country) {
-
-        Bson queryFilter = new Document();
-        Bson projection = new Document();
-        //TODO> Ticket: Projection - implement the query and projection required by the unit test
+        Document queryFilter = new Document("countries", new Document("$all", Arrays.asList(country)));
+        Bson projection = new Document("title", 1);
         List<Document> movies = new ArrayList<>();
-
+        moviesCollection
+                .find(queryFilter)
+                .projection(projection)
+                .into(movies);
         return movies;
     }
 
@@ -162,10 +168,8 @@ public class MovieDao extends AbstractMFlixDao {
      * @return List of documents sorted by sortKey that match the cast selector.
      */
     public List<Document> getMoviesByCast(String sortKey, int limit, int skip, String... cast) {
-        Bson castFilter = null;
-        Bson sort = null;
-        //TODO> Ticket: Subfield Text Search - implement the expected cast
-        // filter and sort
+        Bson castFilter = Filters.in("cast", cast);
+        Bson sort = Sorts.descending(sortKey);
         List<Document> movies = new ArrayList<>();
         moviesCollection
                 .find(castFilter)
@@ -194,8 +198,11 @@ public class MovieDao extends AbstractMFlixDao {
         List<Document> movies = new ArrayList<>();
         // TODO > Ticket: Paging - implement the necessary cursor methods to support simple
         // pagination like skip and limit in the code below
-        moviesCollection.find(castFilter).sort(sort).iterator()
-        .forEachRemaining(movies::add);
+        moviesCollection
+                .find(castFilter)
+                .sort(sort)
+                .iterator()
+                .forEachRemaining(movies::add);
         return movies;
     }
 
