@@ -17,7 +17,6 @@ import java.util.List;
 
 @Component
 public class MovieDao extends AbstractMFlixDao {
-
     public static String MOVIES_COLLECTION = "movies";
     private MongoCollection<Document> moviesCollection;
 
@@ -31,7 +30,6 @@ public class MovieDao extends AbstractMFlixDao {
     @SuppressWarnings("unchecked")
     private Bson buildLookupStage() {
         return null;
-
     }
 
     /**
