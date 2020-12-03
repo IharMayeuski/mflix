@@ -19,7 +19,6 @@ import java.util.List;
 public class MovieDao extends AbstractMFlixDao {
 
     public static String MOVIES_COLLECTION = "movies";
-
     private MongoCollection<Document> moviesCollection;
 
     @Autowired
