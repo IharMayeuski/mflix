@@ -15,8 +15,6 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
-//import static com.mongodb.client.model.Filters.eq;
-
 @Component
 public class MovieDao extends AbstractMFlixDao {
 
@@ -65,7 +63,7 @@ public class MovieDao extends AbstractMFlixDao {
 
         List<Bson> pipeline = new ArrayList<>();
         // match stage to find movie
-        Bson match = Aggregates.match(eq("_id", new ObjectId(movieId)));
+        Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
         pipeline.add(match);
         // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
         // retrieved with Movies.
