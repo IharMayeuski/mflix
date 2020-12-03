@@ -30,7 +30,6 @@ public class MovieDao extends AbstractMFlixDao {
     @SuppressWarnings("unchecked")
     private Bson buildLookupStage() {
         return null;
-
     }
 
     /**
