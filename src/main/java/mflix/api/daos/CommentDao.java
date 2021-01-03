@@ -1,16 +1,9 @@
 package mflix.api.daos;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoWriteException;
-import com.mongodb.ReadConcern;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.Sorts;
-import com.mongodb.client.model.Updates;
-import com.mongodb.client.result.DeleteResult;
-import com.mongodb.client.result.UpdateResult;
 import mflix.api.models.Comment;
 import mflix.api.models.Critic;
 import org.bson.Document;
@@ -24,11 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import java.text.MessageFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
+import static java.time.format.DateTimeFormatter.ISO_DATE;
+import static java.util.Objects.isNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
@@ -76,12 +70,23 @@ public class CommentDao extends AbstractMFlixDao {
      * returns the resulting Comment object.
      */
     public Comment addComment(Comment comment) {
+        if (checkComment(comment)) {
+            commentCollection.insertOne(comment);
+            return comment;
+        }
+        return null;
 
         // TODO> Ticket - Update User reviews: implement the functionality that enables adding a new
         // comment.
         // TODO> Ticket - Handling Errors: Implement a try catch block to
         // handle a potential write exception when given a wrong commentId.
-        return null;
+    }
+
+    private boolean checkComment(Comment comment) {
+        if (isNull(comment) || isNull(comment.getId())) {
+            throw new IncorrectDaoOperation("something wrong");
+        }
+        return true;
     }
 
     /**
@@ -98,12 +103,26 @@ public class CommentDao extends AbstractMFlixDao {
      * @return true if successfully updates the comment text.
      */
     public boolean updateComment(String commentId, String text, String email) {
+        try {
+            Bson query = new Document("_id", new ObjectId(commentId));
+            FindIterable<Comment> comments = commentCollection.find(query);
+            if (comments.iterator().hasNext() && comments.iterator().next().getEmail().equals(email)) {
+                Document document = new Document("text", text);
+                LocalDate date = LocalDate.now();
+                String dateText = date.format(ISO_DATE);
+                document.put("date", dateText);
+                commentCollection.updateOne(query, new Document("$set", document));
+                return true;
+            }
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+        }
+        return false;
 
         // TODO> Ticket - Update User reviews: implement the functionality that enables updating an
         // user own comments
         // TODO> Ticket - Handling Errors: Implement a try catch block to
         // handle a potential write exception when given a wrong commentId.
-        return false;
     }
 
     /**

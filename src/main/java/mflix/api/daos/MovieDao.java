@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static java.util.Objects.nonNull;
+
 @Component
 public class MovieDao extends AbstractMFlixDao {
     public static String MOVIES_COLLECTION = "movies";
@@ -29,7 +31,7 @@ public class MovieDao extends AbstractMFlixDao {
 
     @SuppressWarnings("unchecked")
     private Bson buildLookupStage() {
-        return null;
+        return Aggregates.lookup("comments", "_id", "movie_id", "comments");
     }
 
     /**
@@ -40,10 +42,8 @@ public class MovieDao extends AbstractMFlixDao {
      * @return true if valid movieId.
      */
     private boolean validIdValue(String movieId) {
-        //TODO> Ticket: Handling Errors - implement a way to catch a
-        //any potential exceptions thrown while validating a movie id.
-        //Check out this method's use in the method that follows.
-        return true;
+        Document document = moviesCollection.find(Filters.eq("_id", new ObjectId(movieId))).first();
+        return nonNull(document);
     }
 
     /**
@@ -62,11 +62,9 @@ public class MovieDao extends AbstractMFlixDao {
         // match stage to find movie
         Bson match = Aggregates.match(Filters.eq("_id", new ObjectId(movieId)));
         pipeline.add(match);
-        // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to
-        // retrieved with Movies.
-        Document movie = moviesCollection.aggregate(pipeline).first();
-
-        return movie;
+        pipeline.add(buildLookupStage());
+        // TODO> Ticket: Get Comments - implement the lookup stage that allows the comments to retrieved with Movies.
+        return moviesCollection.aggregate(pipeline).first();
     }
 
     /**
